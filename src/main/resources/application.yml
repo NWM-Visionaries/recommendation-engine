@@ -1,0 +1,45 @@
+spring:
+log4j:
+  logger:
+    httpclient:
+      wire: DEBUG
+      
+logging:
+  level:
+    org.springframework.web: DEBUG
+    
+client:
+  id: 4cKOjU3i-KvIPNyCV3dNUWnCMO6VvE8TNbHrIwZelpA=
+  secret: 1bzcIIXYUbr5K3RBpzFjwCJRjG5LFf5ydW4HOG8zBaY=
+  redirectUri: http://7b2fabf5d042.ngrok.io/redirecting
+  financialId: 0015800000jfwB4AAI
+  state: ABC
+  authorizationUsername: 123456789012@team.acc.org
+  authorizationAccount: 50000012345601
+  tokenUrl: https://ob.rbs.useinfinite.io/token
+  initRunning: true
+
+server:
+  port : 4001
+
+tls:
+  alias:
+  enableMatls: false
+  keyStore:
+    location:
+    password:
+  trustStore:
+    location:
+    password:
+
+aisp:
+  target:
+    context: /open-banking/v3.1/aisp
+    baseUri: https://ob.rbs.useinfinite.io
+    audience: https://api.rbs.useinfinite.io/authorize
+
+pisp:
+  target:
+    context: /open-banking/v3.1/pisp
+    baseUri: https://ob.rbs.useinfinite.io
+    audience: https://api.rbs.useinfinite.io/authorize

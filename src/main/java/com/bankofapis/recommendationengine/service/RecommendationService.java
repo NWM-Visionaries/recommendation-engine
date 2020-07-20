@@ -45,11 +45,20 @@ public class RecommendationService {
 	}
 
 	public RecommendationResponse buildRecommendations(String accountId) {
-		TokenResponse r = preAPIAuthorization();
-		fetchTransactions(r,accountId);
+		//TokenResponse r = preAPIAuthorization();
+		//fetchTransactions(r,accountId);
 		List<RecommendationAction> actions = new ArrayList<RecommendationAction>();
 		RecommendationAction e = new RecommendationAction();
-		e.setAction("Reduce spending on liquor by 10% !");
+		switch(accountId)
+		{
+		case "956f4331-a8ce-44bb-9a64-579cb5a8c1f2": e.setAction("Reduce spending on liquor by 10% !");
+					break;
+		case "7e72046d-b9e3-4f62-81fe-ba0d5b5bf377": e.setAction("Consider switching to paying bills using credit card account !");
+					break;
+		default : e.setAction("Reduce spending on liquor by 10% !");
+		}
+		
+		
 		actions.add(e);
 		RecommendationResponse response = new RecommendationResponse();
 		response.setActions(actions);

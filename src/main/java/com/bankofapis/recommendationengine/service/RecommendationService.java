@@ -3,11 +3,7 @@ package com.bankofapis.recommendationengine.service;
 
 
 
-import java.io.IOException;
 import java.net.URI;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -19,7 +15,6 @@ import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
@@ -27,40 +22,34 @@ import com.bankofapis.core.model.accounts.OBReadAccountList;
 import com.bankofapis.core.model.accounts.OBReadDataResponse;
 import com.bankofapis.core.model.accounts.OBReadTransaction;
 import com.bankofapis.core.model.accounts.OBReadTransactionList;
-import com.bankofapis.core.model.token.TokenRequest;
 import com.bankofapis.core.model.token.TokenResponse;
-import com.bankofapis.recommendationengine.config.ClientConfig;
+import com.bankofapis.recommendationengine.config.APIServiceConfig;
 import com.bankofapis.recommendationengine.model.RecommendationAction;
 import com.bankofapis.recommendationengine.model.RecommendationResponse;
-import com.fasterxml.jackson.core.JsonParser.Feature;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.core.json.JsonReadFeature;
-import com.fasterxml.jackson.databind.JsonMappingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.json.JsonMapper;
 
 
 
 @Service
 public class RecommendationService {
 	private static final Logger logger = LoggerFactory.getLogger(RecommendationService.class);
-	private static final String SCOPE_ACCOUNT_VALUE = "accounts";
-	private static final String CLIENT_CRED_GRANT_TYPE_VALUE = "client_credentials";
-	private static final Path path = Paths.get("c:\\\\hackathon\\\\token.txt");
-	private ClientConfig clientConfig;	
+	
+		
 	private RestTemplate restTemplate;
+	private APIServiceConfig apiServiceConfig;
 	
 	@Autowired
-	public RecommendationService(RestTemplate restTemplate,ClientConfig clientConfig)
-	{
-		this.clientConfig = clientConfig;
+	public RecommendationService(RestTemplate restTemplate,APIServiceConfig apiServiceConfig)
+	{		
 		this.restTemplate = restTemplate;
+		this.apiServiceConfig=apiServiceConfig;
 	}
 
 	
 	public RecommendationResponse buildRecommendations(String accountId) {
 		List<RecommendationAction> actions = new ArrayList<RecommendationAction>();
 		List<OBReadTransaction> transactions = fetchTransactions(accountId);
+		if(transactions==null)
+			return null;
 		Optional<OBReadTransaction> t = transactions.stream().filter(z-> Double.parseDouble(z.getAmount().getAmount()) > 1000 && z.getCreditDebitIndicator().equalsIgnoreCase("Debit")).findAny();
 		if(t.isPresent())
 		{
@@ -90,6 +79,18 @@ public class RecommendationService {
 			actions.add(e);
 		}
 
+//		Map<String, DoubleSummaryStatistics> stats = transactions.stream().				
+//				collect(Collectors.groupingBy(OBReadTransaction::getTransactionInformation,
+//						Collectors.groupingBy(OBReadTransaction::getCreditDebitIndicator),
+//						Collectors.summarizingDouble(OBReadTransaction::getAmount::getAmount)));
+//		if(k.isPresent())
+//		{
+//			RecommendationAction e = new RecommendationAction();
+//			e.setAction("Balance above 1000 bucks!! Consider an investment into SIP !!");
+//			actions.add(e);
+//		}
+
+				
 		
 	
 		RecommendationResponse response = new RecommendationResponse();
@@ -99,9 +100,9 @@ public class RecommendationService {
 	}
 
 	private List<OBReadTransaction> fetchTransactions(String accountId) {
-		URI URL0=URI.create("http://localhost:8080/open-banking/v3/passToken/");
-		URI URL1=URI.create("http://localhost:8080/open-banking/v3/aisp/accounts/");
-		URI URL2=URI.create("http://localhost:8080/open-banking/v3/aisp/accounts/" + accountId + "/transactions");
+		URI URL0=URI.create(apiServiceConfig.getURLString()+"/open-banking/v3/passToken/");
+		URI URL1=URI.create(apiServiceConfig.getURLString()+"/open-banking/v3/aisp/accounts/");
+		URI URL2=URI.create(apiServiceConfig.getURLString()+"/open-banking/v3/aisp/accounts/" + accountId + "/transactions");
 		
 		TokenResponse response0 = restTemplate.exchange(URL0, 
                 HttpMethod.GET, 
@@ -134,47 +135,10 @@ public class RecommendationService {
 		
 	}
 
-	private TokenResponse preAPIAuthorization() {
-		String t = init();
-		return token(t);
-	}
-
-	private String init() {
-		URI URL=URI.create("http://localhost:8080/open-banking/v3/aisp/init");
-		ResponseEntity<String> responseEntity = restTemplate.exchange(
-			    URL, 
-			    HttpMethod.GET, 
-			    null, 
-			    new ParameterizedTypeReference<String>() {
-			    });
-			String resp = responseEntity.getBody();
-			System.out.println("resp = " + resp);
-			ResponseEntity<String> responseEntity2 = restTemplate.exchange(
-					resp, 
-				    HttpMethod.GET, 
-				    null, 
-				    new ParameterizedTypeReference<String>() {
-				    });
-				String resp2 = responseEntity2.getBody();
-			System.out.println("resp2 = " + resp2);
-			return resp;
-	} 
 	
-	private TokenResponse token(String t) {
-		URI URL=URI.create("http://localhost:8080/open-banking/v3/token");
-		TokenRequest tokenRequest = new TokenRequest();
-        tokenRequest.setClientId(clientConfig.getClientId());
-        tokenRequest.setClientSecret(clientConfig.getClientSecret());
-        tokenRequest.setScope(SCOPE_ACCOUNT_VALUE);
-        tokenRequest.setGrantType(CLIENT_CRED_GRANT_TYPE_VALUE);
-		TokenResponse responseEntity = restTemplate.postForObject(
-			    URL,
-			    tokenRequest, 
-			    TokenResponse.class 
-			    );
-		System.out.println("resp = " + responseEntity.toString());
-			return responseEntity;
-			
-	} 
+
+	
+	
+	
 	
 }
